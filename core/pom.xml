@@ -76,6 +76,12 @@
       <artifactId>joda-time</artifactId>
     </dependency>
 
+	<dependency>
+		<groupId>org.apache.clerezza.commons-rdf</groupId>
+		<artifactId>commons-rdf-api</artifactId>
+		<version>0.2</version>
+    </dependency>
+	  
     <!-- General Purpose -->
     <dependency>
       <groupId>org.slf4j</groupId>

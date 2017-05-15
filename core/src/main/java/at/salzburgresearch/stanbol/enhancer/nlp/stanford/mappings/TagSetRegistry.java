@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.apache.clerezza.rdf.core.UriRef;
+import org.apache.clerezza.commons.rdf.IRI;
 import org.apache.stanbol.enhancer.nlp.dependency.GrammaticalRelation;
 import org.apache.stanbol.enhancer.nlp.dependency.GrammaticalRelationTag;
 import org.apache.stanbol.enhancer.nlp.model.tag.TagSet;
@@ -191,9 +191,9 @@ public class TagSetRegistry {
         TagSet<PosTag> treebank = new TagSet<PosTag>(
             "Penn Treebank (Stanford NLP version)", "en");
         treebank.getProperties().put("olia.annotationModel", 
-            new UriRef("http://purl.org/olia/penn.owl"));
+            new IRI("http://purl.org/olia/penn.owl"));
         treebank.getProperties().put("olia.linkingModel", 
-            new UriRef("http://purl.org/olia/penn-link.rdf"));
+            new IRI("http://purl.org/olia/penn-link.rdf"));
 
         treebank.addTag(new PosTag("CC", Pos.CoordinatingConjunction));
         treebank.addTag(new PosTag("CD",Pos.CardinalNumber));
@@ -400,10 +400,10 @@ public class TagSetRegistry {
         nerTags.addTag(new NerTag("LOCATION", OntologicalClasses.DBPEDIA_PLACE));
         
         //other NER tags mapped to some Ontology Concept
-        nerTags.addTag(new NerTag("MONEY", new UriRef(NamespaceEnum.dbpedia_ont + "Currency")));
-        nerTags.addTag(new NerTag("DATE", new UriRef("http://www.w3.org/2006/time#Instant")));
-        nerTags.addTag(new NerTag("TIME", new UriRef("http://www.w3.org/2006/time#Instant")));
-        nerTags.addTag(new NerTag("DURATION", new UriRef("http://www.w3.org/2006/time#Interval")));
+        nerTags.addTag(new NerTag("MONEY", new IRI(NamespaceEnum.dbpedia_ont + "Currency")));
+        nerTags.addTag(new NerTag("DATE", new IRI("http://www.w3.org/2006/time#Instant")));
+        nerTags.addTag(new NerTag("TIME", new IRI("http://www.w3.org/2006/time#Instant")));
+        nerTags.addTag(new NerTag("DURATION", new IRI("http://www.w3.org/2006/time#Interval")));
 
         //further unmapped POS tags
         nerTags.addTag(new NerTag("MISC"));
