@@ -8,7 +8,7 @@
 # (6) Parse Tree
 # (7) Sentiment (requires Parse Tree)
 
-annotators = tokenize, ssplit, pos, lemma, ner, parse, sentiment
+annotators = tokenize, ssplit, pos, lemma, ner, parse, dcoref, relation
 
 #Simpler pipeline without sentiment analysis
 #annotators = tokenize, ssplit, pos, lemma, ner

@@ -6,9 +6,9 @@ import static org.apache.stanbol.enhancer.nlp.NlpAnnotations.POS_ANNOTATION;
 import static org.apache.stanbol.enhancer.nlp.NlpAnnotations.DEPENDENCY_ANNOTATION;
 import static org.apache.stanbol.enhancer.nlp.NlpAnnotations.COREF_ANNOTATION;
 import static org.apache.stanbol.enhancer.nlp.NlpAnnotations.SENTIMENT_ANNOTATION;
+import static org.apache.stanbol.enhancer.nlp.NlpAnnotations.ENTITY_RELATION_ANNOTATION;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +23,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.stanbol.enhancer.nlp.NlpAnnotations;
 import org.apache.stanbol.enhancer.nlp.coref.CorefFeature;
 import org.apache.stanbol.enhancer.nlp.dependency.DependencyRelation;
 import org.apache.stanbol.enhancer.nlp.dependency.GrammaticalRelationTag;
@@ -38,6 +37,7 @@ import org.apache.stanbol.enhancer.nlp.model.tag.TagSet;
 import org.apache.stanbol.enhancer.nlp.morpho.MorphoFeatures;
 import org.apache.stanbol.enhancer.nlp.ner.NerTag;
 import org.apache.stanbol.enhancer.nlp.pos.PosTag;
+import org.apache.stanbol.enhancer.nlp.relation.EntityRelation;
 import org.apache.stanbol.enhancer.servicesapi.Blob;
 import org.ejml.simple.SimpleMatrix;
 import org.slf4j.Logger;
@@ -49,6 +49,9 @@ import at.salzburgresearch.stanbol.enhancer.nlp.stanford.mappings.TagSetRegistry
 import edu.stanford.nlp.dcoref.CorefChain;
 import edu.stanford.nlp.dcoref.CorefChain.CorefMention;
 import edu.stanford.nlp.dcoref.CorefCoreAnnotations.CorefChainAnnotation;
+import edu.stanford.nlp.ie.machinereading.structure.EntityMention;
+import edu.stanford.nlp.ie.machinereading.structure.MachineReadingAnnotations;
+import edu.stanford.nlp.ie.machinereading.structure.RelationMention;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
@@ -325,6 +328,11 @@ public class StanfordNlpAnalyzer {
                     sent.addAnnotation(SENTIMENT_ANNOTATION, Value.value(sentimentValue));
                 }
             }
+            
+            //Add entity relations in sentence span
+            List<RelationMention> relations = sentence.get(MachineReadingAnnotations.RelationMentionsAnnotation.class);
+            addRelationMentions(tokens, relations, sent);
+            
             //clean up the sentence
             sentStart = null;
             sentEnd = null;
@@ -440,6 +448,46 @@ public class StanfordNlpAnalyzer {
                     Value.value(new CorefFeature(isRepresentative, mentionsAsSpans)));
             }
         }
+    }
+    
+    /**
+     * Adds Relation elements between two or more entities
+     * @param tokens
+     * @param relations
+     * @param sentence
+     */
+    private void addRelationMentions(List<CoreLabel> tokens, List<RelationMention> relations, Sentence sentence) {
+    	for (RelationMention relation : relations) {
+    		String type = relation.getType();
+    		double confidence = relation.getTypeProbabilities().getCount(type);
+    		
+    		//We're not interested in non-relations
+    		if (type.equals("_NR")) continue;
+    		
+    		Set<Span> entities = new HashSet<Span>();
+    		for (EntityMention entity : relation.getEntityMentionArgs()) {
+    			int spanStart = -1;
+    			int spanEnd = -1;
+    			boolean isChunk = false;
+    			
+    			for (int i = entity.getExtentTokenStart(); i < entity.getExtentTokenEnd(); i ++){
+    				CoreLabel token = tokens.get(i);
+    				if (spanStart == -1) spanStart = token.beginPosition();
+    				spanEnd = token.endPosition();
+    				
+    				if (i > entity.getExtentTokenStart()) isChunk = true;
+			    }
+    			
+    			if (isChunk) {
+    				entities.add(sentence.addChunk(spanStart, spanEnd));
+    			} else {
+    				entities.add(sentence.addToken(spanStart, spanEnd));
+    			}
+    		}
+    		
+    		sentence.addAnnotation(ENTITY_RELATION_ANNOTATION, 
+                    Value.value(new EntityRelation(type, confidence, entities)));
+    	}
     }
     
     /**
